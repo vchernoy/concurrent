@@ -369,5 +369,56 @@ monitor Semaphore(nUnits: Int = 0) {
 }
 ```
 
+## Read/Write Mutex Zoo
 
+### Read/write mutex
+
+```scala
+monitor ReadWriteMutex {
+	private var nReaders: Int
+	private var nWriters: Int
+
+	def lockRead() {
+		wait nWriters == 0
+		nReaders++
+	}
+	def unlockRead() {
+		nReaders--
+	}
+	def lockWrite() {
+		wait nWriters + nReaders == 0
+		nWriters++
+	}
+	def unlockWrite() {
+		nWriters--
+	}
+}
+```
+
+### Up-prioritizing write-access requests
+
+```scala
+monitor ReadWriteMutex {
+	private var nReaders: Int
+	private var nWriters: Int
+	private var nWriteReqs: Int
+
+	def lockRead() {
+		wait nWriters + nWriteReqs == 0
+		nReaders++
+	}
+	def unlockRead() {
+		nReaders--
+	}
+	def lockWrite() {
+		nWriteReqs++
+		wait nWriters + nReaders == 0
+		nWriteReqs--
+		nWriters++
+	}
+	def unlockWrite() {
+		nWriters--
+	}
+}
+```
 
