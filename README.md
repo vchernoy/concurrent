@@ -500,3 +500,29 @@ monitor DelayQueue[V] {
 	}
 }
 ```
+
+## Advanced Syncronization
+
+### Delay executor
+
+class DelayExecutor(exec: Executor) {
+	private val queue = new DelayQueue[Runnable]
+	private val worker = new Thread {
+	    override def run() {
+		    while (true) {
+			    exec.execute(queue.dequeue())
+		    }
+	    }
+    }
+	worker.start()
+
+	def execute(r: Runnable, timeout: Duration = 0) {
+		if (timeout == 0) {
+			exec.execute(r)
+		} else {
+		    queue.enqueue(r, timeout)
+	    }
+	}
+}
+```
+
