@@ -296,3 +296,78 @@ monitor Event {
 }
 ```
 
+## Condition Variable, Mutex, and Semaphore
+
+### Condition variable
+
+Note that `Condition` is just a class, since we use `AutoEvent`
+
+```scala
+class Condition(mutex: Mutex) {
+	private val event = new AutoEvent
+
+	def await() {
+		mutex.unlock()
+		try {
+    		event.wait()
+	    } finally {
+		    mutex.lock()
+	    }
+	}
+	def signal() {
+		event.pulseOne()
+	}
+	def signalAll() {
+		event.pulseAll()
+    }
+}
+```
+
+### Mutex
+
+```scala
+monitor Mutex {
+	private var locked: Boolean
+
+	def isLocked = locked
+	def lock() {
+		wait not locked
+		locked = true
+	}
+	def unlock() {
+		locked = false
+	}
+	def tryLock(timeout: Duration = 0): Boolean = {
+		wait not locked for timeout
+		if (not locked) {
+			locked = true
+			true
+		} else false
+	}
+	def condition(): Condition = new Condition(this)
+}
+```
+
+### Semaphore
+
+```scala
+monitor Semaphore(nUnits: Int = 0) {
+	def release() {
+		nUnits++
+	}
+	def acquire() {
+		wait nUnits > 0
+		nUnits--
+	}
+	def tryAcquire(timeout: Duration): Boolean = {
+		wait nUnits > 0 for timeout
+		if (nUnits > 0) {
+			nUnits--
+			true
+        } else false
+	}
+}
+```
+
+
+
