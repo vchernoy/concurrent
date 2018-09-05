@@ -422,3 +422,81 @@ monitor ReadWriteMutex {
 }
 ```
 
+## Blocking Queue Zoo
+
+### Unbounded blocking queue
+
+```scala
+monitor UnboundedBlockingQueue[V] {
+	private val queue = new Queue[V]
+
+	def enqueue(value: V) {
+		queue.enqueue(value)
+	}
+	def dequeue(): V = {
+		wait not queue.empty()
+		queue.dequeue()
+	}
+}
+```
+
+### Bounded blocking queue
+
+```scala
+monitor BlockingQueue[V](capacity: Int) {
+	private val queue = new Queue[V]
+
+	def enqueue(value: V) {
+		wait queue.size() < capacity
+		queue.enqueue(value)
+	}
+	def dequeue(): V = {
+		wait not queue.empty()
+		queue.dequeue()
+	}
+}
+```
+
+## Delay Queue Zoo
+
+### Using Dijkstra’s while loop.
+
+```scala
+monitor DelayQueue[V] {
+	case class Entry(value: V, when: Time)
+
+	private val queue = new PriorityQueue[Entry](e => e.when)
+
+	def enqueue(value: V, timeout: Duration) {
+		queue.enqueue(Entry(value, now() + timeout))
+	}
+	def dequeue(): V = {
+		while (queue.empty()) {
+			wait()
+		} elif (queue.top().when > now()) {
+			wait(queue.top().when - now())
+		}
+		queue.dequeue().value
+    }
+}
+```
+
+### Delay queue with `wait until`-statement
+
+```scala
+monitor DelayQueue[V] {
+	case class Entry(value: V, when: Time)
+
+	private val queue = new PriorityQueue[Entry](e => e.when)
+
+	def enqueue(value: V, timeout: Duration) {
+		queue.enqueue(Entry(value, now() + timeout))
+	}
+	def dequeue(): V = {
+           wait not queue.empty() and queue.top().when <= now()
+                   until if (queue.empty()) INFINITY else queue.top().when
+
+		queue.dequeue().value
+	}
+}
+```
