@@ -505,6 +505,7 @@ monitor DelayQueue[V] {
 
 ### Delay executor
 
+```scala
 class DelayExecutor(exec: Executor) {
     private val queue = new DelayQueue[Runnable]
     private val worker = new Thread {
@@ -528,7 +529,7 @@ class DelayExecutor(exec: Executor) {
 
 ### Dealine map
 
-```
+```scala
 monitor DeadlineMap[K, V] {
     class MEntry(var value: V, var it: DelayQueue[Entry].iterator=_)
 
