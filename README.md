@@ -531,7 +531,7 @@ class DelayExecutor(exec: Executor) {
 
 ```scala
 monitor DeadlineMap[K, V] {
-    class MEntry(var value: V, var it: DelayQueue[Entry].iterator=_)
+    class MEntry(var value: V=_, var it: DelayQueue[Entry].iterator=_)
 
     private val queue = new DelayQueue[K]
     private val table = new HashMap[K, MEntry]
@@ -544,27 +544,25 @@ monitor DeadlineMap[K, V] {
     }
     worker.start()
 
-    def containsKey(key K): Boolean = table.containsKey(key)
+    def contains(key K): Boolean = table.contains(key)
     def get(key: K, defaultVal: V): V =
-        if (table.containsKey(key)) table.get(key).value else null
+        table.getOrElse(key, new MEntry()).value
     def put(key: K, value: V) {
-        if (table.containsKey(key)) {
-            table.get(key).value = value
-        } else {
-            table.put(key, new MEntry(value))
-        }
+        table.getOrElseUpdate(key, new MEntry()).value = value
     }
     def remove(key: K, timeout: Duration = 0) {
-        if (table.containsKey(key)) {
-            val e = table.get(key)
-            if (e.it != null) {
-                e.it.remove()
+        table.get(key) match {
+            case Some(e) => {
+                if (e.it != null) {
+                    e.it.remove()
+                }
+                if (timeout > 0) {
+                    e.it = queue.enqueue(key, timeout)
+                } else {
+                    table.remove(key)
+                }
             }
-            if (timeout > 0) {
-                e.it = queue.enqueue(key, timeout)
-            } else {
-                table.remove(key)
-            }
+            case _ =>
         }
     }
 }
