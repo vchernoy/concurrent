@@ -86,13 +86,15 @@ wait for timeout
 ```scala
 while (condition1) {
     statements1
-} elif (condition2) {
+} else if (condition2) {
     statements2
 ...
 }
 ```
 
-It is equivalent to 
+I find `elif` is nicer than `else if`, but it is very unusual for Java/Scala world.
+
+The Dijkstra's while loop is equivalent to
 
 ```scala
 while (true) {
@@ -473,7 +475,7 @@ monitor DelayQueue[V] {
     def dequeue(): V = {
         while (queue.empty()) {
             wait()
-        } elif (queue.top().when > now()) {
+        } else if (queue.top().when > now()) {
             wait(queue.top().when - now())
         }
         queue.dequeue().value
