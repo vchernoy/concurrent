@@ -304,21 +304,21 @@ Note that `Condition` is just a class, since we use `AutoEvent`
 
 ```scala
 class Condition(mutex: Mutex) {
-	private val event = new AutoEvent
+    private val event = new AutoEvent
 
-	def await() {
-		mutex.unlock()
-		try {
-    		event.wait()
-	    } finally {
-		    mutex.lock()
-	    }
-	}
-	def signal() {
-		event.pulseOne()
-	}
-	def signalAll() {
-		event.pulseAll()
+    def await() {
+        mutex.unlock()
+        try {
+            event.wait()
+        } finally {
+            mutex.lock()
+        }
+    }
+    def signal() {
+        event.pulseOne()
+    }
+    def signalAll() {
+        event.pulseAll()
     }
 }
 ```
@@ -327,24 +327,24 @@ class Condition(mutex: Mutex) {
 
 ```scala
 monitor Mutex {
-	private var locked: Boolean
+    private var locked: Boolean
 
-	def isLocked = locked
-	def lock() {
-		wait not locked
-		locked = true
-	}
-	def unlock() {
-		locked = false
-	}
-	def tryLock(timeout: Duration = 0): Boolean = {
-		wait not locked for timeout
-		if (not locked) {
-			locked = true
-			true
-		} else false
-	}
-	def condition(): Condition = new Condition(this)
+    def isLocked = locked
+    def lock() {
+        wait not locked
+        locked = true
+    }
+    def unlock() {
+        locked = false
+    }
+    def tryLock(timeout: Duration = 0): Boolean = {
+        wait not locked for timeout
+        if (not locked) {
+            locked = true
+            true
+        } else false
+    }
+    def condition(): Condition = new Condition(this)
 }
 ```
 
@@ -352,20 +352,20 @@ monitor Mutex {
 
 ```scala
 monitor Semaphore(nUnits: Int = 0) {
-	def release() {
-		nUnits++
-	}
-	def acquire() {
-		wait nUnits > 0
-		nUnits--
-	}
-	def tryAcquire(timeout: Duration): Boolean = {
-		wait nUnits > 0 for timeout
-		if (nUnits > 0) {
-			nUnits--
-			true
+    def release() {
+        nUnits++
+    }
+    def acquire() {
+        wait nUnits > 0
+        nUnits--
+    }
+    def tryAcquire(timeout: Duration): Boolean = {
+        wait nUnits > 0 for timeout
+        if (nUnits > 0) {
+            nUnits--
+            true
         } else false
-	}
+    }
 }
 ```
 
@@ -375,23 +375,23 @@ monitor Semaphore(nUnits: Int = 0) {
 
 ```scala
 monitor ReadWriteMutex {
-	private var nReaders: Int
-	private var nWriters: Int
+    private var nReaders: Int
+    private var nWriters: Int
 
-	def lockRead() {
-		wait nWriters == 0
-		nReaders++
-	}
-	def unlockRead() {
-		nReaders--
-	}
-	def lockWrite() {
-		wait nWriters + nReaders == 0
-		nWriters++
-	}
-	def unlockWrite() {
-		nWriters--
-	}
+    def lockRead() {
+        wait nWriters == 0
+        nReaders++
+    }
+    def unlockRead() {
+        nReaders--
+    }
+    def lockWrite() {
+        wait nWriters + nReaders == 0
+        nWriters++
+    }
+    def unlockWrite() {
+        nWriters--
+    }
 }
 ```
 
@@ -399,26 +399,26 @@ monitor ReadWriteMutex {
 
 ```scala
 monitor ReadWriteMutex {
-	private var nReaders: Int
-	private var nWriters: Int
-	private var nWriteReqs: Int
+    private var nReaders: Int
+    private var nWriters: Int
+    private var nWriteReqs: Int
 
-	def lockRead() {
-		wait nWriters + nWriteReqs == 0
-		nReaders++
-	}
-	def unlockRead() {
-		nReaders--
-	}
-	def lockWrite() {
-		nWriteReqs++
-		wait nWriters + nReaders == 0
-		nWriteReqs--
-		nWriters++
-	}
-	def unlockWrite() {
-		nWriters--
-	}
+    def lockRead() {
+        wait nWriters + nWriteReqs == 0
+        nReaders++
+    }
+    def unlockRead() {
+        nReaders--
+    }
+    def lockWrite() {
+        nWriteReqs++
+        wait nWriters + nReaders == 0
+        nWriteReqs--
+        nWriters++
+    }
+    def unlockWrite() {
+        nWriters--
+    }
 }
 ```
 
@@ -428,15 +428,15 @@ monitor ReadWriteMutex {
 
 ```scala
 monitor UnboundedBlockingQueue[V] {
-	private val queue = new Queue[V]
+    private val queue = new Queue[V]
 
-	def enqueue(value: V) {
-		queue.enqueue(value)
-	}
-	def dequeue(): V = {
-		wait not queue.empty()
-		queue.dequeue()
-	}
+    def enqueue(value: V) {
+        queue.enqueue(value)
+    }
+    def dequeue(): V = {
+        wait not queue.empty()
+        queue.dequeue()
+    }
 }
 ```
 
@@ -444,16 +444,16 @@ monitor UnboundedBlockingQueue[V] {
 
 ```scala
 monitor BlockingQueue[V](capacity: Int) {
-	private val queue = new Queue[V]
+    private val queue = new Queue[V]
 
-	def enqueue(value: V) {
-		wait queue.size() < capacity
-		queue.enqueue(value)
-	}
-	def dequeue(): V = {
-		wait not queue.empty()
-		queue.dequeue()
-	}
+    def enqueue(value: V) {
+        wait queue.size() < capacity
+        queue.enqueue(value)
+    }
+    def dequeue(): V = {
+        wait not queue.empty()
+        queue.dequeue()
+    }
 }
 ```
 
@@ -463,20 +463,20 @@ monitor BlockingQueue[V](capacity: Int) {
 
 ```scala
 monitor DelayQueue[V] {
-	case class Entry(value: V, when: Time)
+    case class Entry(value: V, when: Time)
 
-	private val queue = new PriorityQueue[Entry](e => e.when)
+    private val queue = new PriorityQueue[Entry](e => e.when)
 
-	def enqueue(value: V, timeout: Duration) {
-		queue.enqueue(Entry(value, now() + timeout))
-	}
-	def dequeue(): V = {
-		while (queue.empty()) {
-			wait()
-		} elif (queue.top().when > now()) {
-			wait(queue.top().when - now())
-		}
-		queue.dequeue().value
+    def enqueue(value: V, timeout: Duration) {
+        queue.enqueue(Entry(value, now() + timeout))
+    }
+    def dequeue(): V = {
+        while (queue.empty()) {
+            wait()
+        } elif (queue.top().when > now()) {
+            wait(queue.top().when - now())
+        }
+        queue.dequeue().value
     }
 }
 ```
@@ -485,19 +485,19 @@ monitor DelayQueue[V] {
 
 ```scala
 monitor DelayQueue[V] {
-	case class Entry(value: V, when: Time)
+    case class Entry(value: V, when: Time)
 
-	private val queue = new PriorityQueue[Entry](e => e.when)
+    private val queue = new PriorityQueue[Entry](e => e.when)
 
-	def enqueue(value: V, timeout: Duration) {
-		queue.enqueue(Entry(value, now() + timeout))
-	}
-	def dequeue(): V = {
-           wait not queue.empty() and queue.top().when <= now()
-                   until if (queue.empty()) INFINITY else queue.top().when
+    def enqueue(value: V, timeout: Duration) {
+        queue.enqueue(Entry(value, now() + timeout))
+    }
+    def dequeue(): V = {
+        wait not queue.empty() and queue.top().when <= now()
+                until if (queue.empty()) INFINITY else queue.top().when
 
-		queue.dequeue().value
-	}
+        queue.dequeue().value
+    }
 }
 ```
 
@@ -506,23 +506,23 @@ monitor DelayQueue[V] {
 ### Delay executor
 
 class DelayExecutor(exec: Executor) {
-	private val queue = new DelayQueue[Runnable]
-	private val worker = new Thread {
-	    override def run() {
-		    while (true) {
-			    exec.execute(queue.dequeue())
-		    }
-	    }
+    private val queue = new DelayQueue[Runnable]
+    private val worker = new Thread {
+        override def run() {
+            while (true) {
+                exec.execute(queue.dequeue())
+            }
+        }
     }
-	worker.start()
+    worker.start()
 
-	def execute(r: Runnable, timeout: Duration = 0) {
-		if (timeout == 0) {
-			exec.execute(r)
-		} else {
-		    queue.enqueue(r, timeout)
-	    }
-	}
+    def execute(r: Runnable, timeout: Duration = 0) {
+        if (timeout == 0) {
+            exec.execute(r)
+        } else {
+            queue.enqueue(r, timeout)
+        }
+    }
 }
 ```
 
@@ -530,42 +530,42 @@ class DelayExecutor(exec: Executor) {
 
 ```
 monitor DeadlineMap[K, V] {
-	class MEntry(var value: V, var it: DelayQueue[Entry].iterator=_)
+    class MEntry(var value: V, var it: DelayQueue[Entry].iterator=_)
 
-	private val queue = new DelayQueue[K]
-	private val table = new HashMap[K, MEntry]
-	private val worker = new Thread {
-	    override def run() {
-		    while (true) {
-			    remove(queue.dequeue().key)
-		    }
-	    }
-	}
-	worker.start()
+    private val queue = new DelayQueue[K]
+    private val table = new HashMap[K, MEntry]
+    private val worker = new Thread {
+        override def run() {
+            while (true) {
+                remove(queue.dequeue().key)
+            }
+        }
+    }
+    worker.start()
 
-	def containsKey(key K): Boolean = table.containsKey(key)
-	def get(key: K, defaultVal: V): V =
+    def containsKey(key K): Boolean = table.containsKey(key)
+    def get(key: K, defaultVal: V): V =
         if (table.containsKey(key)) table.get(key).value else null
-	def put(key: K, value: V) {
-		if (table.containsKey(key)) {
-		    table.get(key).value = value
-	    } else {
-		    table.put(key, new MEntry(value))
-	    }
-	}
-	def remove(key: K, timeout: Duration = 0) {
-		if (table.containsKey(key)) {
-			val e = table.get(key)
-		    if (e.it != null) {
-			    e.it.remove()
-			}
+    def put(key: K, value: V) {
+        if (table.containsKey(key)) {
+            table.get(key).value = value
+        } else {
+            table.put(key, new MEntry(value))
+        }
+    }
+    def remove(key: K, timeout: Duration = 0) {
+        if (table.containsKey(key)) {
+            val e = table.get(key)
+            if (e.it != null) {
+                e.it.remove()
+            }
             if (timeout > 0) {
                 e.it = queue.enqueue(key, timeout)
             } else {
-	            table.remove(key)
+                table.remove(key)
             }
-		}
-	}
+        }
+    }
 }
 ```
 
