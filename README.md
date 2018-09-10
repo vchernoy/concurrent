@@ -181,119 +181,53 @@ monitor AutoBarrier(maxArrivals: Int) {
 
 ```scala
 monitor Event {
-    private var pulsedAll: Boolean
+    private var signaled: Boolean
 
-    def pulseAll() {
-        pulsedAll = true
+    def signal() {
+        signaled = true
     }
     def wait() {
-        wait pulsedAll
+        wait signaled
+    }
+    def reset() {
+        signaled = false
     }
 }
 ```
 
-### Manual event with `pulseOne`
-
-```scala
-monitor Event {
-    private var pulsedOne: Boolean
-    private var pulsedAll: Boolean
-
-    def pulseOne() {
-        pulsedOne = true
-    }
-    def pulseAll() {
-        pulsedAll = true
-    }
-    def wait() {
-        wait pulsedOne or pulsedAll
-        if (pulsedOne) {
-            pulsedOne = false
-        }
-    }
-}
-```
-
-### Automatically reset event
+### Auto event with `signalOne`
 
 ```scala
 monitor AutoEvent {
-    private var pulse: Int
+    private var signaled: Boolean
 
-    def pulseAll() {
-        pulse++
+    def signal() {
+        signaled = true
     }
     def wait() {
-        val nextPulse = pulse + 1
-        wait pulse >= nextPulse
+        wait signaled
+        signaled = false
     }
 }
 ```
 
-### Manual event supporting `reset`
+### Condition event
 
 ```scala
-monitor Event {
-    private var pulse: Int
-    private var pulsed: Boolean
-
-    def pulseAll() {
-        pulse++
-        pulsed = true
-    }
-    def wait() {
-        if (not pulsed) {
-            val nextPulse = pulse + 1
-            wait pulse >= nextPulse
-        }
-    }
-    def reset() {
-        pulsed = false
-    }
-}
-```
-
-### Automatically reset event with `pulseOne`
-
-```scala
-monitor AutoEvent {
-    private var nPulsed: Int
+monitor ConditionEvent {
+    private var nSignaled: Int
     private var nPending: Int
 
-    def pulseOne() {
-        nPulsed++
+    def signal() {
+        nSignaled++
     }
-    def pulseAll() {
-        nPulsed = nPending
-    }
-    def wait() {
-        nPending++
-        val id = nPending
-        wait nPulsed >= id
-    }
-}
-```
-
-### Manual event supporting `reset` and `pulseOne`
-
-```scala
-monitor Event {
-    private var nPulsed: Int
-    private var nPending: Int
-
-    def pulseOne() {
-        nPulsed++
-    }
-    def pulseAll() {
-        nPulsed = +INFINITY
+    def signalAll() {
+        nSignaled = nPending
     }
     def wait() {
-        nPending++
         val id = nPending
-        wait nPulsed >= id
-    }
-    def reset() {
-        nPulsed = nPending
+        nPending++
+        wait nSignaled > id
     }
 }
 ```
@@ -306,7 +240,7 @@ Note that `Condition` is just a class, since we use `AutoEvent`
 
 ```scala
 class Condition(mutex: Mutex) {
-    private val event = new AutoEvent
+    private val event = new ConditionEvent
 
     def await() {
         mutex.unlock()
@@ -317,10 +251,10 @@ class Condition(mutex: Mutex) {
         }
     }
     def signal() {
-        event.pulseOne()
+        event.signal()
     }
     def signalAll() {
-        event.pulseAll()
+        event.signalAll()
     }
 }
 ```
