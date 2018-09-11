@@ -21,7 +21,7 @@ class Monitor(value: Type) {
         try {
             statements
         } finally {
-            notifyAll();
+            this.notifyAll;
         }
     }
     ...
@@ -43,7 +43,7 @@ It is equivalent to
 
 ```scala
 while (!condition && deadline > now()) {
-    wait(deadline - now());
+    this.wait(deadline - now());
 }
 ```
 
@@ -148,7 +148,7 @@ monitor CompareAndSwap[V](var value: V = _) {
 
 ## Barries
 
-## Manual barrier
+### Manual Barrier
 
 ```scala
 monitor Barrier(maxArrivals: Int) {
@@ -161,7 +161,7 @@ monitor Barrier(maxArrivals: Int) {
 }
 ```
 
-## Automatically reset barrier
+### Automatically reset Barrier
 
 ```scala
 monitor AutoBarrier(maxArrivals: Int) {
@@ -175,9 +175,9 @@ monitor AutoBarrier(maxArrivals: Int) {
 }
 ```
 
-## Events Zoo
+## Events
 
-### Manual event
+### Manual Event
 
 ```scala
 monitor Event {
@@ -195,7 +195,7 @@ monitor Event {
 }
 ```
 
-### Auto event with `signalOne`
+### Auto Event with `signalOne`
 
 ```scala
 monitor AutoEvent {
@@ -211,7 +211,7 @@ monitor AutoEvent {
 }
 ```
 
-### Condition event
+### Condition Event
 
 ```scala
 monitor ConditionEvent {
@@ -232,29 +232,29 @@ monitor ConditionEvent {
 }
 ```
 
-## Condition Variable, Mutex, and Semaphore
+## Condition Variables, Mutexes, and Semaphores
 
-### Condition variable
+### Condition Variable
 
-Note that `Condition` is just a class, since we use `AutoEvent`
+Note that `ConditionVar` is just a class, since we use `ConditionEvent`
 
 ```scala
-class Condition(mutex: Mutex) {
+class ConditionVar(mutex: Mutex) {
     private val event = new ConditionEvent
 
     def await() {
-        mutex.unlock()
+        mutex.unlock
         try {
-            event.wait()
+            event.wait
         } finally {
-            mutex.lock()
+            mutex.lock
         }
     }
-    def signal() {
-        event.signal()
+    def notify() {
+        event.signal
     }
-    def signalAll() {
-        event.signalAll()
+    def notifyAll() {
+        event.signalAll
     }
 }
 ```
@@ -280,7 +280,7 @@ monitor Mutex {
             true
         } else false
     }
-    def condition(): Condition = new Condition(this)
+    def conditionVar(): ConditionVar = new ConditionVar(this)
 }
 ```
 
@@ -305,12 +305,12 @@ monitor Semaphore(nUnits: Int = 0) {
 }
 ```
 
-## Read/Write Mutex Zoo
+## Read/Write Locks
 
-### Read/write mutex
+### Read/Write Lock
 
 ```scala
-monitor ReadWriteMutex {
+monitor ReadWriteLock {
     private var nReaders: Int
     private var nWriters: Int
 
@@ -331,10 +331,10 @@ monitor ReadWriteMutex {
 }
 ```
 
-### Up-prioritizing write-access requests
+### Read/Write Lock with up-prioritizing write-access requests
 
 ```scala
-monitor ReadWriteMutex {
+monitor ReadWriteLock {
     private var nReaders: Int
     private var nWriters: Int
     private var nWriteReqs: Int
@@ -358,9 +358,9 @@ monitor ReadWriteMutex {
 }
 ```
 
-## Blocking Queue Zoo
+## Blocking Queues
 
-### Unbounded blocking queue
+### Unbounded Blocking Queue
 
 ```scala
 monitor UnboundedBlockingQueue[V] {
@@ -376,7 +376,7 @@ monitor UnboundedBlockingQueue[V] {
 }
 ```
 
-### Bounded blocking queue
+### Bounded Blocking Queue
 
 ```scala
 monitor BlockingQueue[V](capacity: Int) {
@@ -393,9 +393,9 @@ monitor BlockingQueue[V](capacity: Int) {
 }
 ```
 
-## Delay Queue Zoo
+## Delay Queues
 
-### Using Dijkstra’s while loop.
+### Delay Queue with Dijkstra’s `while`-loop
 
 ```scala
 monitor DelayQueue[V] {
@@ -408,16 +408,16 @@ monitor DelayQueue[V] {
     }
     def dequeue(): V = {
         while (entries.isEmpty) {
-            wait()
+            this.wait
         } else if (entries.head.when > now()) {
-            wait(entries.head.when - now())
+            this.wait(entries.head.when - now())
         }
         entries.dequeue.value
     }
 }
 ```
 
-### Delay queue with `wait until`-statement
+### Delay Queue with `wait until`-statement
 
 ```scala
 monitor DelayQueue[V] {
@@ -439,7 +439,7 @@ monitor DelayQueue[V] {
 
 ## Advanced Syncronization
 
-### Delay executor
+### Delay Executor
 
 ```scala
 class DelayExecutor(exec: Executor) {
@@ -451,7 +451,7 @@ class DelayExecutor(exec: Executor) {
             }
         }
     }
-    worker.start()
+    worker.start
 
     def execute(r: Runnable, timeout: Duration = 0) {
         if (timeout == 0) {
@@ -463,10 +463,10 @@ class DelayExecutor(exec: Executor) {
 }
 ```
 
-### Dealine map
+### Expire Map
 
 ```scala
-monitor DeadlineMap[K, V] {
+monitor ExpireMap[K, V] {
     class MEntry(var value: V = _, var it: DelayQueue[Entry].iterator=_)
 
     private val keys = new DelayQueue[K]
@@ -478,7 +478,7 @@ monitor DeadlineMap[K, V] {
             }
         }
     }
-    worker.start()
+    worker.start
 
     def contains(key K): Boolean = table.contains(key)
     def get(key: K): V = table.getOrElse(key, new MEntry).value
